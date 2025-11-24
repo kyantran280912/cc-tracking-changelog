@@ -1,0 +1,32 @@
+# Environment variables
+.env
+
+# State file
+state.json
+
+# Node modules
+node_modules/
+
+# Build output
+dist/
+
+# TypeScript cache
+*.tsbuildinfo
+
+# Logs
+*.log
+logs/
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Python (legacy)
+*.pyc
+__pycache__/
+venv/
+last_changelog.txt

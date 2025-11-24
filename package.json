@@ -1,0 +1,34 @@
+{
+  "name": "claude-code-changelog-tracker",
+  "version": "1.0.0",
+  "description": "Track Claude Code changelog and notify via Telegram when new version is released",
+  "type": "module",
+  "main": "dist/index.js",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "start": "tsx src/index.ts",
+    "build": "tsc",
+    "check": "tsx src/index.ts --once"
+  },
+  "keywords": [
+    "claude-code",
+    "changelog",
+    "telegram",
+    "notification",
+    "tracker"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "telegraf": "^4.16.0",
+    "semver": "^7.6.0",
+    "node-cron": "^3.0.0",
+    "dotenv": "^16.0.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.0.0",
+    "@types/node": "^20.0.0",
+    "@types/node-cron": "^3.0.0",
+    "tsx": "^4.0.0"
+  }
+}
