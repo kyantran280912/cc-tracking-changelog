@@ -1,0 +1,38 @@
+# Fly.io configuration for Claude Code Changelog Tracker
+# Docs: https://fly.io/docs/reference/configuration/
+
+app = "claude-code-tracker-kyan"
+primary_region = "sin" # Singapore - thay đổi region nếu cần
+
+# Build configuration
+[build]
+
+[env]
+  PORT = "3000"
+  NODE_ENV = "production"
+
+# HTTP service configuration
+[http_service]
+  internal_port = 3000
+  force_https = false
+  auto_stop_machines = false # QUAN TRỌNG: Không tự động stop (cron cần chạy 24/7)
+  auto_start_machines = true
+  min_machines_running = 1 # Luôn có ít nhất 1 machine running
+
+  # Health check
+  [[http_service.checks]]
+    grace_period = "30s" # Cho 30s để app khởi động
+    interval = "10s" # Check mỗi 10 giây
+    method = "GET"
+    timeout = "5s"
+    path = "/health"
+
+# VM resources
+[[vm]]
+  memory = "256mb" # Đủ cho bot nhỏ, scale up nếu cần
+  cpu_kind = "shared"
+  cpus = 1
+
+# Graceful shutdown
+kill_signal = "SIGTERM"
+kill_timeout = "5m" # Cho 5 phút để graceful shutdown

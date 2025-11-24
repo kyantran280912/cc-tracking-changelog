@@ -30,3 +30,6 @@ Thumbs.db
 __pycache__/
 venv/
 last_changelog.txt
+
+# Fly.io
+.fly/

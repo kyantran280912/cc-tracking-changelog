@@ -13,6 +13,7 @@ export interface NotificationConfig {
 
 /**
  * Format message markdown cho Telegram
+ * Dùng Markdown (không phải V2) để tránh phức tạp với escape characters
  */
 function formatMessage(version: string, entries: string[]): string {
   const header = `📢 *Claude Code v${version} Released!*\n`;
@@ -20,33 +21,14 @@ function formatMessage(version: string, entries: string[]): string {
   let changeList = '\n🎉 *Changelog:*\n';
 
   if (entries.length > 0) {
-    // Limit to 20 entries để tránh message quá dài
-    const displayEntries = entries.slice(0, 20);
+    // Limit to 15 entries để tránh message quá dài
+    const displayEntries = entries.slice(0, 15);
     displayEntries.forEach(entry => {
-      // Escape markdown special characters
-      const escapedEntry = entry
-        .replace(/\[/g, '\\[')
-        .replace(/\]/g, '\\]')
-        .replace(/\(/g, '\\(')
-        .replace(/\)/g, '\\)')
-        .replace(/~/g, '\\~')
-        .replace(/`/g, '\\`')
-        .replace(/>/g, '\\>')
-        .replace(/#/g, '\\#')
-        .replace(/\+/g, '\\+')
-        .replace(/-/g, '\\-')
-        .replace(/=/g, '\\=')
-        .replace(/\|/g, '\\|')
-        .replace(/\{/g, '\\{')
-        .replace(/\}/g, '\\}')
-        .replace(/\./g, '\\.')
-        .replace(/!/g, '\\!');
-
-      changeList += `• ${escapedEntry}\n`;
+      changeList += `• ${entry}\n`;
     });
 
-    if (entries.length > 20) {
-      changeList += `\n_\\.\\.\\. và ${entries.length - 20} thay đổi khác_\n`;
+    if (entries.length > 15) {
+      changeList += `\n_... và ${entries.length - 15} thay đổi khác_\n`;
     }
   } else {
     changeList += '• _No changelog entries found_\n';
@@ -70,12 +52,7 @@ export async function sendNotification(
     const message = formatMessage(version, entries);
 
     await bot.telegram.sendMessage(config.chatId, message, {
-      parse_mode: 'MarkdownV2',
-      disable_web_page_preview: false,
-      link_preview_options: {
-        is_disabled: false,
-        prefer_large_media: false
-      }
+      parse_mode: 'Markdown'
     });
 
     console.log(`✅ Telegram notification sent for version ${version}`);

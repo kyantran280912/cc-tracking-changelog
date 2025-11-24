@@ -1,0 +1,58 @@
+# Node
+node_modules/
+npm-debug.log
+yarn-error.log
+
+# Build output
+dist/
+
+# Environment
+.env
+.env.*
+!.env.example
+
+# Git
+.git/
+.gitignore
+.gitattributes
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Documentation
+README.md
+CHANGELOG.md
+LICENSE
+*.md
+
+# CI/CD
+.github/
+.gitlab-ci.yml
+
+# Fly.io
+.fly/
+fly.toml
+
+# State files
+state.json
+
+# Logs
+*.log
+logs/
+
+# Python legacy (if any)
+__pycache__/
+*.pyc
+*.pyo
+venv/
+
+# TypeScript
+*.tsbuildinfo

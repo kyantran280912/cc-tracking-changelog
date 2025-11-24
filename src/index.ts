@@ -4,6 +4,7 @@
  */
 
 import dotenv from 'dotenv';
+import http from 'http';
 import cron from 'node-cron';
 import { getLatestVersionInfo } from './changelog.js';
 import { isNewerVersion } from './version.js';
@@ -16,6 +17,13 @@ dotenv.config();
 const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN || '';
 const CHAT_ID = process.env.TELEGRAM_CHAT_ID || '';
 const CHECK_INTERVAL_HOURS = parseInt(process.env.CHECK_INTERVAL_HOURS || '1', 10);
+const PORT = parseInt(process.env.PORT || '3000', 10);
+
+// Shutdown flag để prevent cron chạy khi đang shutdown
+let isShuttingDown = false;
+
+// Lưu cron job instance để có thể stop
+let cronJob: cron.ScheduledTask | null = null;
 
 // Validate environment variables
 function validateConfig(): boolean {
@@ -33,9 +41,34 @@ function validateConfig(): boolean {
 }
 
 /**
+ * Health check server cho Fly.io
+ * Fly.io sẽ gọi /health để check xem app còn sống không
+ */
+const healthServer = http.createServer((req, res) => {
+  if (req.url === '/health') {
+    if (isShuttingDown) {
+      res.writeHead(503, { 'Content-Type': 'text/plain' });
+      res.end('Shutting down');
+    } else {
+      res.writeHead(200, { 'Content-Type': 'text/plain' });
+      res.end('OK');
+    }
+  } else {
+    res.writeHead(404, { 'Content-Type': 'text/plain' });
+    res.end('Not found');
+  }
+});
+
+/**
  * Main logic để check changelog và gửi notification nếu có version mới
  */
 async function checkAndNotify(): Promise<void> {
+  // Skip nếu đang shutdown
+  if (isShuttingDown) {
+    console.log('⏭️  Skipping check because app is shutting down');
+    return;
+  }
+
   try {
     console.log('\n🔍 Checking Claude Code changelog...');
 
@@ -53,9 +86,22 @@ async function checkAndNotify(): Promise<void> {
     const lastCheckedVersion = await getLastCheckedVersion();
 
     if (!lastCheckedVersion) {
-      console.log('ℹ️  First time running, saving current version as baseline');
+      console.log('🎉 First time running! Sending initial notification for demo...');
+      console.log(`📝 Found ${versionInfo.entries.length} changelog entries`);
+
+      // Send Telegram notification for initial demo
+      await sendNotification(
+        {
+          botToken: BOT_TOKEN,
+          chatId: CHAT_ID
+        },
+        versionInfo.version,
+        versionInfo.entries
+      );
+
+      // Save baseline
       await updateLastCheckedVersion(versionInfo.version);
-      console.log(`✅ Baseline set to version ${versionInfo.version}`);
+      console.log(`✅ Initial notification sent and baseline set to version ${versionInfo.version}`);
       return;
     }
 
@@ -123,6 +169,12 @@ async function main() {
   console.log('🔄 Running initial check...');
   await checkAndNotify();
 
+  // Start health check server
+  healthServer.listen(PORT, () => {
+    console.log(`\n💚 Health check server running on port ${PORT}`);
+    console.log(`   Endpoint: http://localhost:${PORT}/health`);
+  });
+
   // Setup cron schedule
   // Format: minute hour day month weekday
   const cronExpression = `0 */${CHECK_INTERVAL_HOURS} * * *`; // Every N hours
@@ -130,11 +182,42 @@ async function main() {
   console.log(`\n⏰ Scheduler started with cron: ${cronExpression}`);
   console.log('Press Ctrl+C to stop\n');
 
-  cron.schedule(cronExpression, async () => {
+  cronJob = cron.schedule(cronExpression, async () => {
     console.log(`\n⏰ Scheduled check triggered at ${new Date().toLocaleString()}`);
     await checkAndNotify();
   });
 }
+
+/**
+ * Graceful shutdown handler
+ */
+function gracefulShutdown(signal: string) {
+  console.log(`\n\n👋 ${signal} received, starting graceful shutdown...`);
+  isShuttingDown = true;
+
+  // Stop accepting new cron jobs
+  if (cronJob) {
+    console.log('⏸️  Stopping cron scheduler...');
+    cronJob.stop();
+  }
+
+  // Close health check server
+  healthServer.close(() => {
+    console.log('💚 Health check server closed');
+    console.log('✅ Graceful shutdown completed');
+    process.exit(0);
+  });
+
+  // Force exit after 30 seconds if graceful shutdown hangs
+  setTimeout(() => {
+    console.error('⚠️  Graceful shutdown timeout, forcing exit...');
+    process.exit(1);
+  }, 30000);
+}
+
+// Register signal handlers
+process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
+process.on('SIGINT', () => gracefulShutdown('SIGINT'));
 
 // Start the application
 main().catch(error => {

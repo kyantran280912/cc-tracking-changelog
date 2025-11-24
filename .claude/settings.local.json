@@ -1,10 +1,27 @@
 {
-  "disabledMcpjsonServers": [
-    "context7"
-  ],
   "permissions": {
     "allow": [
-      "Bash(touch:*)"
+      "Bash(touch:*)",
+      "Bash(npm install:*)",
+      "Bash(npm run build:*)",
+      "Bash(tree:*)",
+      "Bash(npm run check:*)",
+      "Bash(cat:*)",
+      "Bash(flyctl version:*)",
+      "Bash(flyctl auth whoami:*)",
+      "Bash(flyctl launch:*)",
+      "Bash(flyctl apps create:*)",
+      "Bash(flyctl secrets set:*)",
+      "Bash(flyctl deploy:*)",
+      "Bash(flyctl logs:*)",
+      "Bash(flyctl status:*)",
+      "Bash(flyctl machine restart:*)",
+      "Bash(timeout 10 flyctl logs:*)",
+      "Bash(flyctl ssh console --app claude-code-tracker-kyan -C \"tail -50 /var/log/*.log 2>/dev/null || cat /app/dist/index.js | head -20\")",
+      "Bash(flyctl ssh console --app claude-code-tracker-kyan -C \"ps aux | grep node && echo ''---'' && head -20 /app/dist/index.js\")"
     ]
-  }
+  },
+  "disabledMcpjsonServers": [
+    "context7"
+  ]
 }
